@@ -1,0 +1,66 @@
+import tensorflow as tf
+from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.models import Model
+from tensorflow.keras.datasets import mnist
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load MNIST dataset
+(x_train, _), (x_test, _) = mnist.load_data()
+
+# Normalize the data to [0, 1]
+x_train = x_train.astype("float32") / 255.0
+x_test = x_test.astype("float32") / 255.0
+
+# Flatten the images (28x28 -> 784)
+x_train = x_train.reshape(-1, 28 * 28)
+x_test = x_test.reshape(-1, 28 * 28)
+
+# Define the dimensions of the autoencoder layers
+input_dim = x_train.shape[1]  # 784
+encoding_dim1 = 128  # First hidden layer
+encoding_dim2 = 64   # Second hidden layer (smallest representation)
+decoding_dim1 = 128  # First decoding layer
+output_dim = input_dim  # Output layer matches the input dimension
+
+# Encoder
+input_layer = Input(shape=(input_dim,))
+encoded1 = Dense(encoding_dim1, activation='relu')(input_layer)
+encoded2 = Dense(encoding_dim2, activation='relu')(encoded1)
+
+# Decoder
+decoded1 = Dense(decoding_dim1, activation='relu')(encoded2)
+output_layer = Dense(output_dim, activation='sigmoid')(decoded1)
+
+# Autoencoder model
+autoencoder = Model(input_layer, output_layer)
+
+# Compile the model
+autoencoder.compile(optimizer='adam', loss='binary_crossentropy')
+
+# Train the autoencoder
+autoencoder.fit(x_train, x_train, epochs=20, batch_size=256, shuffle=True, validation_data=(x_test, x_test))
+
+# Encoder model for feature extraction
+encoder = Model(input_layer, encoded2)
+
+# Visualize original and reconstructed images
+def display_images(original, reconstructed, n=10):
+    plt.figure(figsize=(20, 4))
+    for i in range(n):
+        # Original images
+        ax = plt.subplot(2, n, i + 1)
+        plt.imshow(original[i].reshape(28, 28), cmap='gray')
+        plt.axis('off')
+        
+        # Reconstructed images
+        ax = plt.subplot(2, n, i + 1 + n)
+        plt.imshow(reconstructed[i].reshape(28, 28), cmap='gray')
+        plt.axis('off')
+    plt.show()
+
+# Generate reconstructed images
+reconstructed = autoencoder.predict(x_test)
+
+# Display original and reconstructed images
+display_images(x_test, reconstructed)
