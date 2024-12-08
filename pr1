@@ -1,0 +1,38 @@
+import numpy as np
+
+# Sigmoid function
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+# Perceptron model
+class Perceptron:
+    def __init__(self, lr=0.1, epochs=10000):
+        self.weights = np.random.rand(2)
+        self.bias = np.random.rand()
+        self.lr = lr
+        self.epochs = epochs
+
+    def train(self, X, y):
+        for _ in range(self.epochs):
+            for xi, yi in zip(X, y):
+                output = sigmoid(np.dot(xi, self.weights) + self.bias)
+                error = yi - output
+                self.weights += self.lr * error * output * (1 - output) * xi
+                self.bias += self.lr * error * output * (1 - output)
+
+    def predict(self, X):
+        return [round(sigmoid(np.dot(xi, self.weights) + self.bias)) for xi in X]
+
+# Training data
+X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+y_and = [0, 0, 0, 1]
+y_or = [0, 1, 1, 1]
+
+# Train and test for AND and OR gates
+for gate, y in zip(["AND", "OR"], [y_and, y_or]):
+    perceptron = Perceptron()
+    perceptron.train(X, y)
+    print(f"{gate} Gate Results:")
+    for xi, output in zip(X, perceptron.predict(X)):
+        print(f"Input: {xi}, Output: {output}")
+    print()  # Empty line for separation between AND and OR results
